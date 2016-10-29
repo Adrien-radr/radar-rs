@@ -1,6 +1,6 @@
 [package]
 name = "radar-rs"
 version = "0.1.0"
-authors = ["alexandre"]
+authors = ["Adrien Dubouchet, Alexandre Jubert"]
 
 [dependencies]
