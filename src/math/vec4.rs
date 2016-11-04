@@ -278,9 +278,9 @@ impl Vec4 {
         a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
     }
 
-    pub fn cross(a: Vec4, b: Vec4) -> Vec4 {
-        unimplemented!();
-    }
+    // pub fn cross(a: Vec4, b: Vec4) -> Vec4 {
+    //     unimplemented!();
+    // }
 
     pub fn length(a: Vec4) -> f32 {
         let dot_product = Vec4::dot(a, a);
