@@ -1,6 +1,10 @@
 [package]
-name = "radar"
+name = "radar-rs"
 version = "0.1.0"
-authors = ["AlexandreJubert <jubertalexandre@gmail.com>"]
+authors = ["Adrien Dubouchet, Alexandre Jubert"]
 
 [dependencies]
+gl = "0.6.0"
+
+[dependencies.glfw]
+git = "https://github.com/PistonDevelopers/glfw-rs.git"
