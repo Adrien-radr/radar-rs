@@ -1,4 +1,5 @@
-use std::ops::{Add, Mul, Div, Sub, DivAssign, MulAssign, SubAssign, AddAssign, Neg};
+use std::ops::{Add, Mul, Div, Sub, DivAssign, MulAssign, SubAssign, AddAssign, Neg, Index,
+               IndexMut};
 use std::fmt;
 
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -7,6 +8,31 @@ pub struct Vec4 {
     pub y: f32,
     pub z: f32,
     pub w: f32,
+}
+
+impl Index<usize> for Vec4 {
+    type Output = f32;
+    fn index<'a>(&'a self, _index: usize) -> &'a f32 {
+        match _index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            3 => &self.w,   
+            _ => panic!("Invalid index access in Vec4 {:?}"),
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec4 {
+    fn index_mut<'a>(&'a mut self, _index: usize) -> &'a mut f32 {
+        match _index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            3 => &mut self.w,   
+            _ => panic!("Invalid index access in Vec4 {:?}"),
+        }
+    }
 }
 
 // impl Index<usize> for Vec4 {
@@ -190,7 +216,12 @@ impl DivAssign<f32> for Vec4 {
 impl Vec4 {
     /// create a new vector with the specified coordinates
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Vec4 {
-        Vec4 { x: x, y: y, z: z, w:w}
+        Vec4 {
+            x: x,
+            y: y,
+            z: z,
+            w: w,
+        }
     }
 
     /// return an empty vector
@@ -235,10 +266,10 @@ impl Vec4 {
 
     pub fn normalize(a: Vec4) -> Vec4 {
         let len = Vec4::length(a);
-        if len > 0.0{
+        if len > 0.0 {
             let k = 1.0 / len;
             a * k
-        }else{
+        } else {
             Vec4::empty()
         }
     }
