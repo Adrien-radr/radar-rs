@@ -5,4 +5,4 @@ mod tests {
     }
 }
 
-mod math;
+pub mod math;

@@ -1,6 +1,6 @@
 [package]
 name = "radar"
 version = "0.1.0"
-authors = ["AlexandreJubert <jubertalexandre@gmail.com>"]
+authors = ["Adrien Dubouchet, Alexandre Jubert"]
 
 [dependencies]
