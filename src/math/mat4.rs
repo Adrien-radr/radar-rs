@@ -3,6 +3,7 @@ use std::fmt;
 
 
 use math::vec4::*;
+use math::vec3::*;
 
 #[derive(Copy,Clone,Debug,PartialEq)]
 pub struct Mat4 {
@@ -326,6 +327,19 @@ impl Mat4 {
 
         result
     }
+
+    pub fn frustrum(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Mat4{
+        Mat4::ortho(l,r,b,t,n,f)
+    }
+
+    pub fn look_at(cam_pos : Vec3, target : Vec3, up : Vec3) -> Mat4 {
+        let f = Vec3::normalize(target - cam_pos);
+        let r = Vec3::normalize(Vec3::cross(f,up));
+        let u = Vec3::normalize(Vec3::cross(r,f));
+        unimplemented!()
+    }
+
+
 
 
 }
