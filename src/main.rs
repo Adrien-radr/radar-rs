@@ -4,6 +4,11 @@ extern crate gl;
 use glfw::{Action, Context, Key};
 use gl::types::*;
 
+mod math;
+mod system;
+
+use math::vec3;
+
 fn load_gl_procs(window : &mut glfw::Window) {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 }
@@ -11,10 +16,9 @@ fn load_gl_procs(window : &mut glfw::Window) {
 fn main() {
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
-    let win_w = 300;
-    let win_h = 300;
+    let v = vec3::Vec3::new(300.0, 300.0, 300.0);
 
-    let (mut window, events) = glfw.create_window(win_w, win_h, "radar-rs", glfw::WindowMode::Windowed)
+    let (mut window, events) = glfw.create_window(v.x as u32, v.y as u32, "radar-rs", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.set_key_polling(true);
@@ -27,7 +31,7 @@ fn main() {
         gl::Enable(gl::BLEND);
         gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
     
-        gl::Viewport(0, 0, win_w as i32, win_h as i32);
+        gl::Viewport(0, 0, v.x as i32, v.y as i32);
     }
 
     while !window.should_close() {
