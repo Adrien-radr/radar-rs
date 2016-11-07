@@ -17,10 +17,7 @@ fn main() {
     let mut bck_col = Vec3::new(1.0, 0.8, 0.05);
 
     while !ctx.window.should_close() {
-        ctx.glfw.poll_events();
-        for (_, event) in glfw::flush_messages(&ctx.events) {
-            handle_window_events(&mut ctx.window, event);
-        }
+        ctx.run();
 
         unsafe {
             gl::ClearColor(bck_col.x, bck_col.y, bck_col.z, 1.0);
@@ -46,14 +43,5 @@ fn main() {
         }
         ctx.window.swap_buffers();
 
-    }
-}
-
-fn handle_window_events(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    match event {
-        glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
-            window.set_should_close(true)
-        }
-        _ => {}
     }
 }

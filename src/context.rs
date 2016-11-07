@@ -15,7 +15,10 @@ pub struct Context {
     pub window_width : u32,
     pub window_height: u32,
 
-    config: config::Config
+    config: config::Config,
+
+    key_state: Vec<bool>,
+    prev_key_state: Vec<bool>
 }
 
 impl Context {
@@ -57,11 +60,52 @@ impl Context {
             window_width: winw,
             window_height: winh,
 
-            config: conf
+            config: conf,
+
+            key_state: vec![false; 256],
+            prev_key_state: vec![false; 256]
         }
     }
 
-    pub fn run(&self) {
+    fn handle_window_events(&mut self, events: &[glfw::WindowEvent]) {
+        for event in events {
+            match *event {
+                glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
+                    self.window.set_should_close(true)
+                }
+                glfw::WindowEvent::Key(k, _, glfw::Action::Press, _) => {
+                    self.key_state[k as usize] = true;
+                }
+                glfw::WindowEvent::Key(k, _, glfw::Action::Release, _) => {
+                    self.key_state[k as usize] = false;
+                }
+                _ => {}
+            }
+        }
+    }
 
+    fn handle_events(&mut self) {
+        // cpy last frame events as previous state
+        // array_mut_ref![self.prev_key_state; 0; 256] = *array_ref![self.key_state; 0; 256];
+        self.prev_key_state.clone_from(&self.key_state);
+
+        self.glfw.poll_events();
+
+        let mut evts: Vec<glfw::WindowEvent> = Vec::new();
+        for (_, event) in glfw::flush_messages(&self.events) {
+            evts.push(event);
+        }
+        self.handle_window_events(&evts);
+    }
+
+    pub fn run(&mut self) {
+        self.handle_events();
+
+        if self.key_state[glfw::Key::A as usize] == true && self.prev_key_state[glfw::Key::A as usize] == false {
+            println!("Key A hit");
+        }
+        if self.key_state[glfw::Key::A as usize] == false && self.prev_key_state[glfw::Key::A as usize] == true {
+            println!("Key A released");
+        }
     }
 }
