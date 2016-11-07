@@ -1,5 +1,6 @@
 pub mod math;
 pub mod system;
+pub mod context;
 
 #[cfg(test)]
 mod tests {
@@ -13,7 +14,7 @@ mod tests {
         use system::config;
 
         // read random file
-        let s = filesystem::read_file("data/testfile.txt");
+        let s = filesystem::read_file("data/config.json");
         
         // read and decode JSON config file
         let conf = config::Config::new("data/config.json");

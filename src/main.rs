@@ -1,58 +1,57 @@
 extern crate glfw;
 extern crate gl;
 
-use glfw::{Action, Context, Key};
+// use glfw::{Action, Context, Key};
 use gl::types::*;
+use glfw::Context as glfwContext;
 
 mod math;
 mod system;
+mod context;
 
-use math::vec3;
-
-fn load_gl_procs(window : &mut glfw::Window) {
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-}
+use math::vec3::Vec3;
+use context::Context;
 
 fn main() {
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+    let mut ctx = Context::new("data/config.json");
+    let mut bck_col = Vec3::new(1.0, 0.8, 0.05);
 
-    let v = vec3::Vec3::new(300.0, 300.0, 300.0);
-
-    let (mut window, events) = glfw.create_window(v.x as u32, v.y as u32, "radar-rs", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window.");
-
-    window.set_key_polling(true);
-    window.make_current();
-
-    load_gl_procs(&mut window);
-
-    unsafe{
-        gl::Enable(gl::DEPTH_TEST);
-        gl::Enable(gl::BLEND);
-        gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-    
-        gl::Viewport(0, 0, v.x as i32, v.y as i32);
-    }
-
-    while !window.should_close() {
-        glfw.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            handle_window_events(&mut window, event);
+    while !ctx.window.should_close() {
+        ctx.glfw.poll_events();
+        for (_, event) in glfw::flush_messages(&ctx.events) {
+            handle_window_events(&mut ctx.window, event);
         }
 
         unsafe {
-            gl::ClearColor(1.0, 0.8, 0.05, 1.0);
+            gl::ClearColor(bck_col.x, bck_col.y, bck_col.z, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
-        window.swap_buffers();
+        // WTF RUST ??? NO MAX FOR F32 !?!??!
+        if ctx.window.get_key(glfw::Key::A) == glfw::Action::Press {
+            let newr = bck_col.x - 0.01;
+            if newr > 0.0 {
+                bck_col.x = newr;
+            } else {
+                bck_col.x = 0.0;
+            }
+        }
+        if ctx.window.get_key(glfw::Key::D) == glfw::Action::Press {
+            let newr = bck_col.x + 0.01;
+            if newr < 1.0 {
+                bck_col.x = newr;
+            } else {
+                bck_col.x = 1.0;
+            }
+        }
+        ctx.window.swap_buffers();
 
     }
 }
 
 fn handle_window_events(window: &mut glfw::Window, event: glfw::WindowEvent) {
     match event {
-        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
+        glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _) => {
             window.set_should_close(true)
         }
         _ => {}
