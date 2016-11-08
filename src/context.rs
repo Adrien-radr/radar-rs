@@ -149,7 +149,8 @@ impl Context {
     pub fn is_running(&self) -> bool {
         !self.window.should_close()
     }
-    pub fn run(&mut self) {
+    
+    pub fn start_frame(&mut self) {
         self.handle_events();
 
         if self.is_key_down(glfw::Key::A) {
@@ -170,6 +171,9 @@ impl Context {
         }
 
         self.clear_buffers();
+    }
+
+    pub fn end_frame(&mut self) {
         self.window.swap_buffers();
     }
 }
