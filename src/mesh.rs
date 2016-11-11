@@ -99,12 +99,12 @@ impl Vbo {
 
 pub struct Mesh {
     vao: Vao,
-    vbos: [Vbo; 2], // 0: position, 1: color
+    vbos: [Option<Vbo>; 2], // 0: position, 1: color
     vertex_count: i32
 }
 
 impl Mesh {
-    pub fn new<T>(positions: &[T], colors: &[T]) -> Mesh {
+    pub fn new<T>(positions: &[T], colors: Option<&[T]>) -> Mesh {
         let vao = Vao::new();
         let vcount = positions.len() as i32 / 3;
 
@@ -116,15 +116,21 @@ impl Mesh {
         }
 
         // color
-        let vbo_col = Vbo::from_data(colors, VboType::Vertex);        
-        unsafe {
-            gl::EnableVertexAttribArray(1);
-            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null());
-        }
+        let vbo_col = match colors {
+            Some(arr) => {
+                let vcol = Vbo::from_data(arr, VboType::Vertex);      
+                unsafe {
+                    gl::EnableVertexAttribArray(1);
+                    gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null());
+                } 
+                Some(vcol)
+            },
+            None => None
+        };
 
         let mesh = Mesh { 
             vao: vao, 
-            vbos: [vbo_pos, vbo_col], 
+            vbos: [Some(vbo_pos), vbo_col], 
             vertex_count: vcount 
         };
 
