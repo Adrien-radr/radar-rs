@@ -99,31 +99,40 @@ impl Vbo {
 
 pub struct Mesh {
     vao: Vao,
-    vbos: [Vbo; 1], // 0: position, 1: colour
+    vbos: [Vbo; 2], // 0: position, 1: color
     vertex_count: i32
 }
 
 impl Mesh {
-    pub fn new<T>(positions: &[T]) -> Mesh {
+    pub fn new<T>(positions: &[T], colors: &[T]) -> Mesh {
         let vao = Vao::new();
-        let vbo = Vbo::from_data(positions, VboType::Vertex);
-        let vcount = positions.len() as i32;
+        let vcount = positions.len() as i32 / 3;
 
-        let mesh = Mesh { 
-            vao: vao, 
-            vbos: [vbo], 
-            vertex_count: vcount 
-        };
-
-        unsafe {
+        // position
+        let vbo_pos = Vbo::from_data(positions, VboType::Vertex);
+        unsafe {            
             gl::EnableVertexAttribArray(0);
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
         }
+
+        // color
+        let vbo_col = Vbo::from_data(colors, VboType::Vertex);        
+        unsafe {
+            gl::EnableVertexAttribArray(1);
+            gl::VertexAttribPointer(1, 4, gl::FLOAT, gl::FALSE, 0, ptr::null());
+        }
+
+        let mesh = Mesh { 
+            vao: vao, 
+            vbos: [vbo_pos, vbo_col], 
+            vertex_count: vcount 
+        };
 
         mesh
     }
 
     pub fn render(&self) {
+        self.vao.bind();
         self.vao.draw(self.vertex_count);
     }
 }
