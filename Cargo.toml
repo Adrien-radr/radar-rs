@@ -6,6 +6,8 @@ authors = ["Adrien Dubouchet, Alexandre Jubert"]
 [dependencies]
 gl = "0.6.0"
 rustc-serialize = "*"
+time = "*"
+rand = "*"
 
 [dependencies.glfw]
 git = "https://github.com/PistonDevelopers/glfw-rs.git"
