@@ -2,6 +2,7 @@ pub mod math;
 pub mod system;
 pub mod context;
 pub mod shader;
+pub mod mesh;
 
 #[cfg(test)]
 mod tests {
