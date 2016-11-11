@@ -35,8 +35,7 @@ impl Vao {
     }
 
     pub fn draw(&self, idx_count: i32) {
-        // Adrien TODO - glDrawElementArrays instead
-        unsafe { gl::DrawArrays(gl::TRIANGLES, 0, idx_count); }
+        unsafe { gl::DrawElements(gl::TRIANGLES, idx_count, gl::UNSIGNED_INT, ptr::null()); }
     }
 }
 
@@ -100,13 +99,16 @@ impl Vbo {
 pub struct Mesh {
     vao: Vao,
     vbos: [Option<Vbo>; 2], // 0: position, 1: color
-    vertex_count: i32
+    ibo: Vbo,
+    vertex_count: i32,
+    index_count: i32
 }
 
 impl Mesh {
-    pub fn new<T>(positions: &[T], colors: Option<&[T]>) -> Mesh {
+    pub fn new<T>(positions: &[T], indices: &[u32], colors: Option<&[T]>) -> Mesh {
         let vao = Vao::new();
         let vcount = positions.len() as i32 / 3;
+        let icount = indices.len() as i32;
 
         // position
         let vbo_pos = Vbo::from_data(positions, VboType::Vertex);
@@ -114,6 +116,9 @@ impl Mesh {
             gl::EnableVertexAttribArray(0);
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
         }
+
+        // indices
+        let ibo = Vbo::from_data(indices, VboType::Index);
 
         // color
         let vbo_col = match colors {
@@ -131,7 +136,9 @@ impl Mesh {
         let mesh = Mesh { 
             vao: vao, 
             vbos: [Some(vbo_pos), vbo_col], 
-            vertex_count: vcount 
+            ibo: ibo,
+            vertex_count: vcount,
+            index_count: icount
         };
 
         mesh
@@ -139,6 +146,6 @@ impl Mesh {
 
     pub fn render(&self) {
         self.vao.bind();
-        self.vao.draw(self.vertex_count);
+        self.vao.draw(self.index_count);
     }
 }

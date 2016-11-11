@@ -18,6 +18,11 @@ static VERTEX_DATA: [GLfloat; 9] = [
      0.5, -0.5, 0.0,
     -0.5, -0.5, 0.0
 ];
+
+static INDEX_DATA: [u32; 3] = [
+    0, 1, 2
+];
+
 static VERTEX_COL_DATA: [GLfloat; 12] = [
      1.0, 1.0, 1.0, 1.0,
      1.0, 0.0, 1.0, 1.0,
@@ -51,7 +56,7 @@ fn main() {
     let fs = shader::compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
     let program = shader::link_program(vs, fs);
 
-    let m0 = mesh::Mesh::new(&VERTEX_DATA, Some(&VERTEX_COL_DATA));
+    let m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_COL_DATA));
 
     unsafe {
         gl::UseProgram(program);
