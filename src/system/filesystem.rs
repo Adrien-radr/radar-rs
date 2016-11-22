@@ -3,7 +3,16 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::env;
 
+pub fn check_extension(path: &Path, valid_ext: &[&str]) -> bool {
+    let ext = &path.extension().expect("The file has no extension").to_str().expect("Extension is not valid utf8");
 
+    for vext in valid_ext.iter() {
+        if vext == ext {
+            return true;
+        }
+    }
+    false
+}
 
 pub fn read_file(path_str: &str) -> String {
     let mut path = env::current_dir().unwrap();
