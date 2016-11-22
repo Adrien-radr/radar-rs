@@ -3,6 +3,7 @@ pub mod system;
 pub mod context;
 pub mod shader;
 pub mod mesh;
+pub mod texture;
 
 #[cfg(test)]
 mod tests {

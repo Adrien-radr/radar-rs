@@ -109,15 +109,18 @@ impl Vbo {
     }
 }
 
+#[derive(Clone)]
 pub enum MeshAttrib {
     Position = 0,
-    Color = 1
+    Texcoord = 1,
+    Color = 2
 }
 
 impl MeshAttrib {
     pub fn get_component_count(&self) -> GLint {
         match self {
             &MeshAttrib::Position => 3,
+            &MeshAttrib::Texcoord => 2,
             &MeshAttrib::Color => 4
         }
     }
@@ -125,46 +128,50 @@ impl MeshAttrib {
 
 pub struct Mesh {
     vao: Vao,
-    vbos: [Option<Vbo>; 2], // 0: position, 1: color
+    vbos: [Option<Vbo>; 3], // 0: position, 1: texcoord, 2: color
     ibo: Vbo,
     vertex_count: i32,
     index_count: i32
 }
 
 impl Mesh {
-    pub fn new<T>(positions: &[T], indices: &[u32], colors: Option<&[T]>) -> Mesh {
+    fn make_attrib_vbo<T>(data: Option<&[T]>, ma: MeshAttrib) -> Option<Vbo> {
+        match data {
+            Some(arr) => {
+                let v = Vbo::from_data(arr, VboType::Vertex); 
+                let comp_cnt = ma.get_component_count();
+                let ma_u32 = ma as u32;
+
+                unsafe {
+                    gl::EnableVertexAttribArray(ma_u32);
+                    gl::VertexAttribPointer(ma_u32, comp_cnt, gl::FLOAT, gl::FALSE, 0, ptr::null());
+                } 
+                Some(v)
+            },
+            None => None
+        }
+    }
+
+    pub fn new<T>(positions: &[T], indices: &[u32], texcoords: Option<&[T]>, colors: Option<&[T]>) -> Mesh {
         let vao = Vao::new();
         let vcount = positions.len() as i32 / 3;
         let icount = indices.len() as i32;
 
         // position
-        let vbo_pos = Vbo::from_data(positions, VboType::Vertex);
-        unsafe {            
-            gl::EnableVertexAttribArray(MeshAttrib::Position as u32);
-            gl::VertexAttribPointer(MeshAttrib::Position as u32, 3, gl::FLOAT, 
-                                    gl::FALSE, 0, ptr::null());
-        }
+        let vbo_pos = Mesh::make_attrib_vbo(Some(positions), MeshAttrib::Position);
 
         // indices
         let ibo = Vbo::from_data(indices, VboType::Index);
 
+        // texcord
+        let vbo_tex = Mesh::make_attrib_vbo(texcoords, MeshAttrib::Texcoord);
+
         // color
-        let vbo_col = match colors {
-            Some(arr) => {
-                let vcol = Vbo::from_data(arr, VboType::Vertex);      
-                unsafe {
-                    gl::EnableVertexAttribArray(MeshAttrib::Color as u32);
-                    gl::VertexAttribPointer(MeshAttrib::Color as u32, 4, gl::FLOAT, 
-                                            gl::FALSE, 0, ptr::null());
-                } 
-                Some(vcol)
-            },
-            None => None
-        };
+        let vbo_col = Mesh::make_attrib_vbo(colors, MeshAttrib::Color);
 
         let mesh = Mesh { 
             vao: vao, 
-            vbos: [Some(vbo_pos), vbo_col], 
+            vbos: [vbo_pos, vbo_tex, vbo_col], 
             ibo: ibo,
             vertex_count: vcount,
             index_count: icount
@@ -175,7 +182,7 @@ impl Mesh {
 
     pub fn update_buffer<T>(&mut self, attrib_idx: MeshAttrib, data: &[T]) {
         let components = attrib_idx.get_component_count();
-        let idx = attrib_idx as usize;
+        let idx = attrib_idx.clone() as usize;
 
         self.vao.bind();
         
@@ -183,13 +190,7 @@ impl Mesh {
         match self.vbos[idx] {
             Some(ref mut vb) => vb.update(data),
             None => {
-                let vbo = Vbo::from_data(data, VboType::Vertex);
-                unsafe {            
-                    gl::EnableVertexAttribArray(idx as u32);
-                    gl::VertexAttribPointer(idx as u32, components, gl::FLOAT, 
-                                            gl::FALSE, 0, ptr::null());
-                }
-                self.vbos[idx] = Some(vbo);
+                self.vbos[idx] = Mesh::make_attrib_vbo(Some(data), attrib_idx);
             }
         }
 

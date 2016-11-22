@@ -37,10 +37,15 @@ impl Context {
         // load config file first
         let conf = config::Config::new(config_file);
 
-        let ctx = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+        let mut ctx = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
         let winw = conf.get_u64("iWindowWidth") as u32;
         let winh = conf.get_u64("iWindowHeight") as u32;
+        println!("{} {}", winw, winh);
 
+		ctx.window_hint(glfw::WindowHint::ContextVersion(3, 2));
+		ctx.window_hint(glfw::WindowHint::OpenGlForwardCompat(true));
+		ctx.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
+		
         let (mut window, events) = ctx.create_window(winw, winh, "radar-rs", glfw::WindowMode::Windowed)
             .expect("Failed to create GLFW window.");
 
