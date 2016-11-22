@@ -1,9 +1,12 @@
-mod context;
-mod shader;
 mod system;
 mod math;
-mod mesh;
-mod texture;
+mod renderer;
+
+use renderer::context::*;
+use renderer::mesh;
+use renderer::shader;
+use renderer::texture;
+
 
 extern crate rand;
 extern crate time;
@@ -15,7 +18,6 @@ use std::ptr;
 use std::ffi::CString;
 use rand::Rng;
 
-use context::Context;
 
 // Vertex data
 static VERTEX_DATA: [GLfloat; 9] = [
