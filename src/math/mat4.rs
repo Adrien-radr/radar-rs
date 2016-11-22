@@ -360,7 +360,13 @@ impl Mat4 {
         R
     }
 
-
-
-
+    pub fn transpose(m : Mat4) -> Mat4 {
+        let mut r = Mat4::empty();
+        for j in 0..4{
+            for i in 0..4{
+                r[i][j] = m[j][i];
+            }
+        }
+        r
+    }
 }

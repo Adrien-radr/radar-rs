@@ -25,3 +25,13 @@ pub fn rotate(angle_deg : f32, axis : Vec3) -> Mat4 {
         Vec4::new(0.0,0.0,0.0,1.0),
     )
 }
+
+/// Return a possibly non uniform scaling matrix
+pub fn scale(size : Vec3) -> Mat4 {
+    let mut result = Mat4::identity();
+    result[0][0] *= size.x;
+    result[1][1] *= size.y;
+    result[2][2] *= size.z;
+    result
+}
+
