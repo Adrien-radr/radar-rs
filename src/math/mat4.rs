@@ -101,6 +101,20 @@ impl Mul<f32> for Mat4 {
     }
 }
 
+/// Multiply a Vector by a Matrix
+impl Mul<Vec4> for Mat4 {
+    type Output = Vec4;
+    #[inline(always)]
+    fn mul(self, other : Vec4) -> Vec4 {
+        Vec4 {
+            x: Vec4::dot(self.m[0], other),
+            y: Vec4::dot(self.m[1], other),
+            z: Vec4::dot(self.m[2], other),
+            w: Vec4::dot(self.m[3], other),
+        }
+    }
+}
+
 impl MulAssign<f32> for Mat4 {
     #[inline(always)]
     fn mul_assign(&mut self, other: f32) {
