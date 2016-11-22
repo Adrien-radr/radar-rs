@@ -4,6 +4,7 @@ use std::fmt;
 
 use math::vec4::*;
 use math::vec3::*;
+use math::transform::*;
 
 #[derive(Copy,Clone,Debug,PartialEq)]
 pub struct Mat4 {
@@ -350,7 +351,13 @@ impl Mat4 {
         let f = Vec3::normalize(target - cam_pos);
         let r = Vec3::normalize(Vec3::cross(f,up));
         let u = Vec3::normalize(Vec3::cross(r,f));
-        unimplemented!()
+        let Tr = translate(-cam_pos);
+        let mut R = Mat4::identity();
+        R[0][0] = r[0];    R[1][0] = r[1];    R[2][0] = r[2];
+		R[0][1] = u[0];    R[1][1] = u[1];    R[2][1] = u[2];
+		R[0][2] = -f[0];   R[1][2] = -f[1];   R[2][2] = -f[2];
+        R *= Tr;
+        R
     }
 
 

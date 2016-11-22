@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Div, Sub, DivAssign, MulAssign, SubAssign, AddAssign, Neg};
+use std::ops::{Add, Mul, Div, Sub, DivAssign, MulAssign, SubAssign, AddAssign, Neg, Index, IndexMut};
 use std::fmt;
 
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -8,18 +8,28 @@ pub struct Vec3 {
     pub z: f32,
 }
 
-// impl Index<usize> for Vec3 {
-//     type Output = f32;
-//     fn index<'a>(&'a self, index: usize) -> &'a f32 {
-//         match index {
-//             0 => self.x,
-//             1 => self.y,
-//             2 => self.z,
-//             _ => panic!("Invalid index for Vec3 access {:?}"),
-//         }
-//     }
-// }
+impl Index<usize> for Vec3 {
+    type Output = f32;
+    fn index<'a>(&'a self, _index: usize) -> &'a f32 {
+        match _index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z, 
+            _ => panic!("Invalid index access in Vec4 {:?}"),
+        }
+    }
+}
 
+impl IndexMut<usize> for Vec3 {
+    fn index_mut<'a>(&'a mut self, _index: usize) -> &'a mut f32 {
+        match _index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Invalid index access in Vec4 {:?}"),
+        }
+    }
+}
 /// Display function
 impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
