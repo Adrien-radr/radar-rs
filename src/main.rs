@@ -36,7 +36,6 @@ static INDEX_DATA: [u32; 3] = [
     0, 1, 2
 ];
 
-
 fn main() {
     let mut VERTEX_COL_DATA: [GLfloat; 12] = [
         1.0, 1.0, 1.0, 1.0,
@@ -70,6 +69,7 @@ fn main() {
 
         gl::ActiveTexture(gl::TEXTURE0);
         program.set_uniform_1i("diffuseTexture",0);
+        program.unbind();
     }
 
     t.bind();

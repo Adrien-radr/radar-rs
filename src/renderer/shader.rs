@@ -100,6 +100,12 @@ impl Program {
         }
     }
 
+    pub fn unbind(&self) {
+        unsafe{
+            gl::UseProgram(0);
+        }
+    }
+
     pub fn link(&self){
         unsafe{
             gl::LinkProgram(self.program_id);
