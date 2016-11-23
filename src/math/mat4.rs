@@ -73,24 +73,16 @@ impl Mul<Mat4> for Mat4 {
     type Output = Mat4;
     #[inline(always)]
     fn mul(self, other: Mat4) -> Mat4 {
-        Mat4 {
-            m: [Vec4::new(self.m[0].x * other.m[0].x,
-                          self.m[1].x * other.m[0].y,
-                          self.m[2].x * other.m[0].z,
-                          self.m[3].x * other.m[0].w),
-                Vec4::new(self.m[0].y * other.m[1].x,
-                          self.m[1].y * other.m[1].y,
-                          self.m[2].y * other.m[1].z,
-                          self.m[3].y * other.m[1].w),
-                Vec4::new(self.m[0].z * other.m[2].x,
-                          self.m[1].z * other.m[2].y,
-                          self.m[2].z * other.m[2].z,
-                          self.m[3].z * other.m[2].w),
-                Vec4::new(self.m[0].w * other.m[3].x,
-                          self.m[1].w * other.m[3].y,
-                          self.m[2].w * other.m[3].z,
-                          self.m[3].w * other.m[3].w)],
+        let mut res = Mat4::empty();
+        for c in 0..4 {
+            for r in 0..4 {
+                res[c][r] = 0.0;
+                for k in 0..4 {
+                    res[c][r] += self.m[c][k] * other.m[k][r];
+                }
+            }
         }
+        res
     }
 }
 
@@ -130,22 +122,7 @@ impl MulAssign<f32> for Mat4 {
 impl MulAssign<Mat4> for Mat4 {
     #[inline(always)]
     fn mul_assign(&mut self, other: Mat4) {
-        self.m[0].x *= other.m[0].x;
-        self.m[1].x *= other.m[0].y;
-        self.m[2].x *= other.m[0].z;
-        self.m[3].x *= other.m[0].w;
-        self.m[0].y *= other.m[1].x;
-        self.m[1].y *= other.m[1].y;
-        self.m[2].y *= other.m[1].z;
-        self.m[3].y *= other.m[1].w;
-        self.m[0].z *= other.m[2].x;
-        self.m[1].z *= other.m[2].y;
-        self.m[2].z *= other.m[2].z;
-        self.m[3].z *= other.m[2].w;
-        self.m[0].w *= other.m[3].x;
-        self.m[1].w *= other.m[3].y;
-        self.m[2].w *= other.m[3].z;
-        self.m[3].w *= other.m[3].w;
+        *self = *self * other; 
     }
 }
 
@@ -202,22 +179,10 @@ fn hfov_to_vfof(aspect : f32, hfov_deg : f32) -> f32{
 }
 
 impl Mat4 {
-    pub fn new(a11: f32,
-               a21: f32,
-               a31: f32,
-               a41: f32,
-               a12: f32,
-               a22: f32,
-               a32: f32,
-               a42: f32,
-               a13: f32,
-               a23: f32,
-               a33: f32,
-               a43: f32,
-               a14: f32,
-               a24: f32,
-               a34: f32,
-               a44: f32)
+    pub fn new(a11: f32, a21: f32, a31: f32, a41: f32,
+               a12: f32, a22: f32, a32: f32, a42: f32,
+               a13: f32, a23: f32, a33: f32, a43: f32,
+               a14: f32, a24: f32, a34: f32, a44: f32)
                -> Mat4 {
         Mat4 {
             m: [Vec4::new(a11, a12, a13, a14),
@@ -228,11 +193,11 @@ impl Mat4 {
 
     }
 
-    pub fn get_ptr(&self) -> *const f32{
+    pub fn get_ptr(&self) -> *const f32 {
         &(self[0][0]) as *const f32
     }
 
-    pub fn new_from_vec4(col1: Vec4, col2: Vec4, col3: Vec4, col4: Vec4) -> Mat4 {
+    pub fn from_vec4(col1: Vec4, col2: Vec4, col3: Vec4, col4: Vec4) -> Mat4 {
         Mat4 { m: [col1, col2, col3, col4] }
     }
 
@@ -307,25 +272,26 @@ impl Mat4 {
 
     pub fn ortho(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Mat4 {
         let mut result = Mat4::empty();
-        result[0][0] = 2.0 * n / (r - l);
+        result[0][0] = 2.0 / (r - l);
         result[0][1] = 0.0;
         result[0][2] = 0.0;
         result[0][3] = 0.0;
 
-        result[1][1] = 2.0 * n / (t - b);
         result[1][0] = 0.0;
+        result[1][1] = 2.0 / (t - b);
         result[1][2] = 0.0;
         result[1][3] = 0.0;
 
-        result[2][0] = (r + l) / (r - l);
-        result[2][1] = (t + b) / (t - b);
-        result[2][2] = -(f + n) / (f - n);
-        result[2][3] = -1.0;
+        result[2][0] = 0.0;
+        result[2][1] = 0.0;
+        result[2][2] = -1.0 / (f - n);
+        result[2][3] = 0.0;
 
-        result[3][2] = -2.0 * (f * n) / (f - n);
-        result[3][0] = 0.0;
-        result[3][1] = 0.0;
-        result[3][3] = 0.0;
+        result[3][0] = -(r + l) / (r - l);
+        result[3][1] = -(t + b) / (t - b);
+        result[3][2] = - n / (f - n);
+        result[3][3] = 1.0;
+
         result
     }
 
@@ -356,7 +322,7 @@ impl Mat4 {
         let f = Vec3::normalize(target - cam_pos);
         let r = Vec3::normalize(Vec3::cross(f,up));
         let u = Vec3::normalize(Vec3::cross(r,f));
-        let Tr = translate(-cam_pos);
+        let Tr = translation(-cam_pos);
         let mut R = Mat4::identity();
         R[0][0] = r[0];    R[1][0] = r[1];    R[2][0] = r[2];
 		R[0][1] = u[0];    R[1][1] = u[1];    R[2][1] = u[2];

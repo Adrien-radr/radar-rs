@@ -253,4 +253,8 @@ impl Vec3 {
             0.0
         }
     }
+
+    pub fn get_ptr(&self) -> *const f32 {
+        &(self[0]) as *const f32
+    }
 }

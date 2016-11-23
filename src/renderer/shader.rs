@@ -1,6 +1,8 @@
 extern crate gl;
 
 use system::filesystem;
+use math::vec3::*;
+use math::vec4::*;
 use math::mat4::*;
 
 use self::gl::types::*;
@@ -38,17 +40,34 @@ pub struct Shader{
     source: String,
 }
 
+impl Drop for Shader {
+    fn drop(&mut self) {
+        unsafe { gl::DeleteShader(self.shader_id); }
+    }
+}
+
 impl Shader{
     pub fn new(shader_type : ShaderType, sourceFilePath : String) -> Shader {
         let src = filesystem::read_file(&sourceFilePath);
-        Shader {shader_id : compile_shader(&src,shader_type.to_gl_type()), shader_type : shader_type,source_file : sourceFilePath,source : src }
+        Shader {
+            shader_id : compile_shader(&src, shader_type.to_gl_type()), 
+            shader_type : shader_type,
+            source_file : sourceFilePath,
+            source : src 
+        }
     }
 }
 
 
 pub struct Program{
     pub program_id : GLuint,
-    uniform_loc : HashMap<String,GLint>,
+    uniform_loc : HashMap<String, GLint>,
+}
+
+impl Drop for Program {
+    fn drop(&mut self) {
+        unsafe { gl::DeleteProgram(self.program_id); }
+    }
 }
 
 impl Program {
@@ -68,40 +87,56 @@ impl Program {
         }
     }
 
-    fn get_uniform(&mut self,name : &str) -> GLint {
+    pub fn register_uniform(&mut self, name: &str) {
+        unsafe {
+            let loc =  gl::GetUniformLocation(self.program_id, CString::new(name).unwrap().as_ptr());
+            self.uniform_loc.insert(name.to_string(), loc);
+        }
+    }
+
+    fn get_uniform(&self, name: &str) -> GLint {
         match self.uniform_loc.get(name) {
             Some(loc) => return *loc,
-            _ => {},
-        }
-        unsafe{
-            let loc = gl::GetUniformLocation(self.program_id,CString::new(name).unwrap().as_ptr());
-            self.uniform_loc.insert(name.to_string(),loc);
-            loc
+            _ => panic!("Uniform {} doesnt exist for shader program {}", name, self.program_id)
         }
     }
 
-    pub fn set_uniform_matrix4fv(&mut self, name : &str, mat4 : Mat4){
-        let loc =  self.get_uniform(name);
-        unsafe{
-            gl::UniformMatrix4fv(loc,1,gl::FALSE, mat4.get_ptr());
+    pub fn set_uniform_matrix4fv(&self, name : &str, mat4 : &Mat4){
+        let loc = self.get_uniform(name);
+        unsafe {
+            gl::UniformMatrix4fv(loc, 1, gl::FALSE, mat4.get_ptr());
         }
     }
 
-    pub fn set_uniform_1i(&mut self, name : &str, int : GLint){
-        let loc =  self.get_uniform(name);
-        unsafe{
+    pub fn set_uniform_3fv(&self, name: &str, vec: &Vec3) {
+        let loc = self.get_uniform(name);
+        unsafe {
+            gl::Uniform3fv(loc, 1, vec.get_ptr());
+        }
+    }
+
+    pub fn set_uniform_4fv(&self, name: &str, vec: &Vec4) {
+        let loc = self.get_uniform(name);
+        unsafe {
+            gl::Uniform4fv(loc, 1, vec.get_ptr());
+        }
+    }
+
+    pub fn set_uniform_1i(&self, name : &str, int : GLint){
+        let loc = self.get_uniform(name);
+        unsafe {
             gl::Uniform1i(loc, int);
         }
     }
 
     pub fn attach(&self, shader : &Shader){
-        unsafe{
+        unsafe {
             gl::AttachShader(self.program_id,shader.shader_id);
         }
     }
 
     pub fn unbind(&self) {
-        unsafe{
+        unsafe {
             gl::UseProgram(0);
         }
     }
@@ -119,6 +154,9 @@ impl Program {
                 gl::GetProgramInfoLog(self.program_id, len, ptr::null_mut(), buf.as_mut_ptr() as *mut GLchar);
                 panic!("{}", str::from_utf8(&buf).ok().expect("ProgramInfoLog not valid utf8"));             
             }
+
+            self.bind();
+            gl::BindFragDataLocation(self.program_id, 0, CString::new("out_color").unwrap().as_ptr());
         }
     }
 }

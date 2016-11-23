@@ -6,6 +6,7 @@ use self::glfw::Context as glfwContext;
 
 use system::config;
 use math::vec4::Vec4;
+use math::mat4::*;
 
 pub struct Context {
     pub glfw: glfw::Glfw,
@@ -16,15 +17,15 @@ pub struct Context {
     pub window_width : u32,
     pub window_height: u32,
 
-    config: config::Config,
+    pub config: config::Config,
 
     key_state: Vec<bool>,
     prev_key_state: Vec<bool>,
     mouse_state: Vec<bool>,
     prev_mouse_state: Vec<bool>,
 
-
-    clear_color: Vec4
+    clear_color: Vec4,
+    pub proj_matrix_2d: Mat4,
 }
 
 impl Context {
@@ -58,11 +59,15 @@ impl Context {
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+
+            gl::ActiveTexture(gl::TEXTURE0);
         
             gl::Viewport(0, 0, winw as i32, winh as i32);
         }
 
         let default_clear_color = Vec4::new(0.2, 0.2, 0.2, 1.0);
+
+        let proj_matrix = Mat4::ortho(0.0, winw as f32, winh as f32, 0.0, 0.01, 100.0);
 
         Context {
             glfw: ctx,
@@ -79,7 +84,8 @@ impl Context {
             mouse_state: vec![false; 16],
             prev_mouse_state: vec![false; 16],
 
-            clear_color: default_clear_color
+            clear_color: default_clear_color,
+            proj_matrix_2d: proj_matrix
         }
     }
 

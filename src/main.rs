@@ -1,12 +1,16 @@
 mod system;
 mod math;
 mod renderer;
+mod canvas;
 
 use renderer::context::*;
 use renderer::mesh;
-use renderer::shader;
+use renderer::shader::{Program, Shader, ShaderType};
 use renderer::texture;
-
+use math::mat4::*;
+use math::transform;
+use math::vec3::*;
+use canvas::Canvas;
 
 extern crate rand;
 extern crate time;
@@ -21,15 +25,15 @@ use rand::Rng;
 
 // Vertex data
 static VERTEX_DATA: [GLfloat; 9] = [
-     0.0,  0.5, 0.0,
-     0.5, -0.5, 0.0,
-    -0.5, -0.5, 0.0
+     200.0, 100.5, 0.11,
+     100.5, 200.5, 0.11,
+     300.5, 200.5, 0.11
 ];
 
 static VERTEX_TEX_DATA: [GLfloat; 6] = [
     0.5, 0.0,
-    1.0, 1.0,
-    0.0, 1.0
+    0.0, 1.0,
+    1.0, 1.0
 ];
 
 static INDEX_DATA: [u32; 3] = [
@@ -47,32 +51,38 @@ fn main() {
 
     let t = texture::Texture::from_image("data/rust.png");
 
-    let mut program = shader::Program::new();
-    let ref vs = shader::Shader::new(shader::ShaderType::VERTEX,"data/shaders/test.vs".to_string());
-    let ref fs = shader::Shader::new(shader::ShaderType::FRAGMENT,"data/shaders/test.frag".to_string());
-    program.attach(vs);
-    program.attach(fs);
-    program.link();
-    // let 
 
-    // let vs = shader::compile_shader(VS_SRC, gl::VERTEX_SHADER);
-    // let fs = shader::compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
-    // let program = shader::link_program(vs, fs);
+    let mut program = Program::new();
+    let vs = Shader::new(ShaderType::VERTEX,"data/shaders/test.vs".to_string());
+    let fs = Shader::new(ShaderType::FRAGMENT,"data/shaders/test.frag".to_string());
+    program.attach(&vs);
+    program.attach(&fs);
+    program.link();
+    program.register_uniform("ProjMatrix");
+    program.register_uniform("ModelMatrix");
+    program.register_uniform("diffuseTexture");
 
     let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_TEX_DATA), Some(&VERTEX_COL_DATA));
 
-    unsafe {
-        program.bind();
+    program.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
+    program.set_uniform_matrix4fv("ModelMatrix", &Mat4::identity());
+    program.set_uniform_1i("diffuseTexture", 0);
 
-        gl::BindFragDataLocation(program.program_id, 0,
-            CString::new("out_color").unwrap().as_ptr());
+    let mut canvas_program = Program::new();
+    let canvas_vs = Shader::new(ShaderType::VERTEX, "data/shaders/canvas.vs".to_string());
+    let canvas_fs = Shader::new(ShaderType::FRAGMENT, "data/shaders/canvas.frag".to_string());
+    canvas_program.attach(&canvas_vs);
+    canvas_program.attach(&canvas_fs);
+    canvas_program.link();
+    canvas_program.register_uniform("ProjMatrix");
+    canvas_program.register_uniform("ModelMatrix");
+    canvas_program.register_uniform("backColor");
+    canvas_program.register_uniform("diffuseTexture");
 
-        gl::ActiveTexture(gl::TEXTURE0);
-        program.set_uniform_1i("diffuseTexture",0);
-        program.unbind();
-    }
+    canvas_program.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
+    canvas_program.set_uniform_1i("diffuseTexture", 0);
 
-    t.bind();
+    let mut canvas1 = Canvas::new((400, 200), (200, 100), &canvas_program);
 
     let mut rng = rand::thread_rng();
 
@@ -103,17 +113,15 @@ fn main() {
             m0.update_buffer(mesh::MeshAttrib::Color, &VERTEX_COL_DATA);
         }
 
+        program.bind();
+        t.bind();
         m0.render();
+
+        canvas_program.bind();
+        canvas1.update(elapsed);
+        canvas1.render();
 
 
         ctx.end_frame();
-    }
-
-    // free mem
-    //TODO add memory cleaner for program and shader
-    unsafe {
-        // gl::DeleteProgram(program);
-        // gl::DeleteShader(vs);
-        // gl::DeleteShader(fs);
     }
 }

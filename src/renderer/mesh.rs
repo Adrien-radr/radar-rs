@@ -135,12 +135,13 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    fn make_attrib_vbo<T>(data: Option<&[T]>, ma: MeshAttrib) -> Option<Vbo> {
+    fn make_attrib_vbo<T>(data: Option<&[T]>, ma: MeshAttrib) -> Option<Vbo> { 
+        let comp_cnt = ma.get_component_count();
+        let ma_u32 = ma as u32;
+        
         match data {
             Some(arr) => {
-                let v = Vbo::from_data(arr, VboType::Vertex); 
-                let comp_cnt = ma.get_component_count();
-                let ma_u32 = ma as u32;
+                let v = Vbo::from_data(arr, VboType::Vertex);
 
                 unsafe {
                     gl::EnableVertexAttribArray(ma_u32);
@@ -148,7 +149,12 @@ impl Mesh {
                 } 
                 Some(v)
             },
-            None => None
+            None => {
+                unsafe {
+                    gl::DisableVertexAttribArray(ma_u32);
+                }
+                None
+            }
         }
     }
 
