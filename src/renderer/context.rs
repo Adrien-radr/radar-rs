@@ -107,6 +107,15 @@ impl Context {
                 glfw::WindowEvent::MouseButton(mb, glfw::Action::Release, _) => {
                     self.mouse_state[mb as usize] = false;
                 }
+                glfw::WindowEvent::Size(width,height) => {
+                    self.window_width = width as u32;
+                    self.window_height = height as u32;
+                }
+                glfw::WindowEvent::FramebufferSize(fb_width,fb_height) => {
+                    unsafe{
+                        gl::Viewport(0,0,fb_width,fb_height);
+                    }
+                }
                 _ => {}
             }
         }
