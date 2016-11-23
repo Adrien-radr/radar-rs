@@ -73,19 +73,27 @@ fn main() {
 
     let t = texture::Texture::from_image("data/rust.png");
 
-    let vs = shader::compile_shader(VS_SRC, gl::VERTEX_SHADER);
-    let fs = shader::compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
-    let program = shader::link_program(vs, fs);
+    let mut program = shader::Program::new();
+    let ref vs = shader::Shader::new(shader::ShaderType::VERTEX,"data/shaders/test.vs".to_string());
+    let ref fs = shader::Shader::new(shader::ShaderType::FRAGMENT,"data/shaders/test.frag".to_string());
+    program.attach(vs);
+    program.attach(fs);
+    program.link();
+    // let 
+
+    // let vs = shader::compile_shader(VS_SRC, gl::VERTEX_SHADER);
+    // let fs = shader::compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
+    // let program = shader::link_program(vs, fs);
 
     let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_TEX_DATA), Some(&VERTEX_COL_DATA));
 
     unsafe {
-        gl::UseProgram(program);
-        gl::BindFragDataLocation(program, 0,
+        gl::UseProgram(program.program_id);
+        gl::BindFragDataLocation(program.program_id, 0,
             CString::new("out_color").unwrap().as_ptr());
 
         gl::ActiveTexture(gl::TEXTURE0);
-        let diffuseTexLoc = gl::GetUniformLocation(program, CString::new("diffuseTexture").unwrap().as_ptr());
+        let diffuseTexLoc = gl::GetUniformLocation(program.program_id, CString::new("diffuseTexture").unwrap().as_ptr());
         gl::Uniform1i(diffuseTexLoc, 0);
     }
 
@@ -127,9 +135,10 @@ fn main() {
     }
 
     // free mem
+    //TODO add memory cleaner for program and shader
     unsafe {
-        gl::DeleteProgram(program);
-        gl::DeleteShader(vs);
-        gl::DeleteShader(fs);
+        // gl::DeleteProgram(program);
+        // gl::DeleteShader(vs);
+        // gl::DeleteShader(fs);
     }
 }

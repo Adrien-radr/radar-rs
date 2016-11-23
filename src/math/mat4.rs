@@ -1,5 +1,6 @@
 use std::ops::{Add, Mul, Div, Sub, DivAssign, MulAssign, SubAssign, AddAssign, Index, IndexMut};
 use std::fmt;
+use std::mem;
 
 
 use math::vec4::*;
@@ -225,6 +226,12 @@ impl Mat4 {
                 Vec4::new(a41, a42, a43, a44)],
         }
 
+    }
+
+    pub fn get_ptr(&self) -> *const f32{
+        unsafe{
+            &mem::transmute::<Mat4,[f32;16]>(*self)[0] as *const f32
+        }
     }
 
     pub fn new_from_vec4(col1: Vec4, col2: Vec4, col3: Vec4, col4: Vec4) -> Mat4 {

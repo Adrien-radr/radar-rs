@@ -8,6 +8,7 @@ use std::ffi::CString;
 use std::ptr;
 use std::str;
 use std::collections::HashMap;
+use std::mem;
 
 pub enum ShaderType{
     VERTEX,
@@ -45,9 +46,9 @@ impl Shader{
 }
 
 
-struct Program{
+pub struct Program{
     pub program_id : GLuint,
-    uniform_loc : HashMap<String,GLuint>,
+    uniform_loc : HashMap<String,GLint>,
 }
 
 impl Program {
@@ -56,17 +57,28 @@ impl Program {
         unsafe{
             Program {
                 program_id : gl::CreateProgram(),
-                uniform_loc : HashMap::new()              
+                uniform_loc : HashMap::new(),              
             }
         }
     }
 
-    fn get_uniform(&mut self,name : &str) -> GLuint {
-        0 as GLuint
+    fn get_uniform(&mut self,name : &str) -> GLint {
+        match self.uniform_loc.get(name) {
+            Some(loc) => return *loc,
+            _ => {},
+        }
+        unsafe{
+            let loc = gl::GetUniformLocation(self.program_id,CString::new(name).unwrap().as_ptr());
+            self.uniform_loc.insert(name.to_string(),loc);
+            loc
+        }
     }
 
     pub fn set_uniform(&mut self, name : &str, mat4 : Mat4){
         let loc =  self.get_uniform(name);
+        unsafe{
+            gl::UniformMatrix4fv(loc,1,gl::FALSE, mat4.get_ptr());
+        }
     }
 
     pub fn attach(&self, shader : &Shader){
