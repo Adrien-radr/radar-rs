@@ -36,31 +36,6 @@ static INDEX_DATA: [u32; 3] = [
     0, 1, 2
 ];
 
-// Shader sources
-static VS_SRC: &'static str =
-   "#version 400\n\
-    in vec3 position;\n\
-    in vec2 texcoord;\n\
-    in vec4 color;\n\
-    out vec2 vTexcoord;\n\
-    out vec4 vColor;\n\
-    void main() {\n\
-        vTexcoord = texcoord;\n\
-        vColor = color;\n\
-        gl_Position = vec4(position, 1.0);\n\
-    }";
-
-static FS_SRC: &'static str =
-   "#version 400\n\
-    in vec2 vTexcoord;\n\
-    in vec4 vColor;\n\
-    uniform sampler2D diffuseTexture;\n\
-    out vec4 out_color;\n\
-    void main() {\n\
-        vec4 diffuse = texture2D(diffuseTexture, vTexcoord);\n\
-        out_color = diffuse * vColor;\n\
-    }";
-
 
 fn main() {
     let mut VERTEX_COL_DATA: [GLfloat; 12] = [
@@ -89,14 +64,12 @@ fn main() {
 
     unsafe {
         program.bind();
-        // gl::UseProgram(program.program_id);
+
         gl::BindFragDataLocation(program.program_id, 0,
             CString::new("out_color").unwrap().as_ptr());
 
         gl::ActiveTexture(gl::TEXTURE0);
         program.set_uniform_1i("diffuseTexture",0);
-        // let diffuseTexLoc = gl::GetUniformLocation(program.program_id, CString::new("diffuseTexture").unwrap().as_ptr());
-        // gl::Uniform1i(diffuseTexLoc, 0);
     }
 
     t.bind();
