@@ -69,6 +69,8 @@ impl<'a> Widget<'a> {
     pub fn render(&self) {
         self.shader.bind();
         self.shader.set_uniform_4fv("backColor", &self.backColor);
+        self.shader.set_uniform_2fv("canvasPosition", (self.position.0 as f32, self.position.1 as f32));
+        self.shader.set_uniform_2fv("canvasSize", (self.size.0 as f32, self.size.1 as f32));
         self.mesh.render();
     }
 }

@@ -254,7 +254,7 @@ impl Vec4 {
         }
     }
 
-    pub fn get_ptr(&self) -> *const f32 {
+    pub fn as_ptr(&self) -> *const f32 {
         &(self[0]) as *const f32
     }
 

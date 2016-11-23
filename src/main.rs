@@ -78,6 +78,8 @@ fn main() {
     canvas_program.register_uniform("ModelMatrix");
     canvas_program.register_uniform("backColor");
     canvas_program.register_uniform("diffuseTexture");
+    canvas_program.register_uniform("canvasPosition");
+    canvas_program.register_uniform("canvasSize");
 
     canvas_program.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
     canvas_program.set_uniform_1i("diffuseTexture", 0);

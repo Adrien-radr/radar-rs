@@ -104,21 +104,28 @@ impl Program {
     pub fn set_uniform_matrix4fv(&self, name : &str, mat4 : &Mat4){
         let loc = self.get_uniform(name);
         unsafe {
-            gl::UniformMatrix4fv(loc, 1, gl::FALSE, mat4.get_ptr());
+            gl::UniformMatrix4fv(loc, 1, gl::FALSE, mat4.as_ptr());
+        }
+    }
+
+    pub fn set_uniform_2fv(&self, name: &str, vec: (f32, f32)) {
+        let loc = self.get_uniform(name);
+        unsafe {
+            gl::Uniform2fv(loc, 1, &vec.0 as *const f32);
         }
     }
 
     pub fn set_uniform_3fv(&self, name: &str, vec: &Vec3) {
         let loc = self.get_uniform(name);
         unsafe {
-            gl::Uniform3fv(loc, 1, vec.get_ptr());
+            gl::Uniform3fv(loc, 1, vec.as_ptr());
         }
     }
 
     pub fn set_uniform_4fv(&self, name: &str, vec: &Vec4) {
         let loc = self.get_uniform(name);
         unsafe {
-            gl::Uniform4fv(loc, 1, vec.get_ptr());
+            gl::Uniform4fv(loc, 1, vec.as_ptr());
         }
     }
 
