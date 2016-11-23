@@ -1,9 +1,97 @@
 extern crate gl;
 
+use system::filesystem;
+use math::mat4::*;
+
 use self::gl::types::*;
 use std::ffi::CString;
 use std::ptr;
 use std::str;
+use std::collections::HashMap;
+
+pub enum ShaderType{
+    VERTEX,
+    TESSCRTL,
+    TESSEVAL,
+    GEOMETRY,
+    FRAGMENT,
+}
+
+impl ShaderType {
+    pub fn to_gl_type(&self) -> GLenum {
+        match self {
+            &ShaderType::VERTEX => gl::VERTEX_SHADER,
+            &ShaderType::FRAGMENT => gl::FRAGMENT_SHADER,
+            &ShaderType::GEOMETRY => gl::GEOMETRY_SHADER,
+            &ShaderType::TESSEVAL => gl::TESS_EVALUATION_SHADER,
+            &ShaderType::TESSCRTL => gl::TESS_CONTROL_SHADER,
+        }
+    }
+}
+
+/// Representation of one shader (vertex shader, fragment shader, etc.)
+pub struct Shader{
+    pub shader_id: GLuint, 
+    shader_type: ShaderType,
+    source_file: String,
+    source: String,
+}
+
+impl Shader{
+    pub fn new(shader_type : ShaderType, sourceFilePath : String) -> Shader {
+        let src = filesystem::read_file(&sourceFilePath);
+        Shader {shader_id : compile_shader(&src,shader_type.to_gl_type()), shader_type : shader_type,source_file : sourceFilePath,source : src }
+    }
+}
+
+
+struct Program{
+    pub program_id : GLuint,
+    uniform_loc : HashMap<String,GLuint>,
+}
+
+impl Program {
+    /// Create a GPU Program (unsafe)
+    pub fn new() -> Program {
+        unsafe{
+            Program {
+                program_id : gl::CreateProgram(),
+                uniform_loc : HashMap::new()              
+            }
+        }
+    }
+
+    fn get_uniform(&mut self,name : &str) -> GLuint {
+        0 as GLuint
+    }
+
+    pub fn set_uniform(&mut self, name : &str, mat4 : Mat4){
+        let loc =  self.get_uniform(name);
+    }
+
+    pub fn attach(&self, shader : &Shader){
+        unsafe{
+            gl::AttachShader(self.program_id,shader.shader_id);
+        }
+    }
+
+    pub fn link(&self){
+        unsafe{
+            gl::LinkProgram(self.program_id);
+            let mut status = gl::FALSE as GLint;
+            gl::GetProgramiv(self.program_id, gl::LINK_STATUS,&mut status);
+            if status != (gl::TRUE as GLint) {
+                let mut len : GLint = 0;
+                gl::GetProgramiv(self.program_id, gl::INFO_LOG_LENGTH, &mut len);
+                let mut buf = Vec::with_capacity(len as usize);
+                buf.set_len((len as usize - 1));
+                gl::GetProgramInfoLog(self.program_id, len, ptr::null_mut(), buf.as_mut_ptr() as *mut GLchar);
+                panic!("{}", str::from_utf8(&buf).ok().expect("ProgramInfoLog not valid utf8"));             
+            }
+        }
+    }
+}
+
 
 pub fn compile_shader(src: &str, ty: GLenum) -> GLuint {
     let shader;
