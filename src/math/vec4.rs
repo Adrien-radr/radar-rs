@@ -254,6 +254,10 @@ impl Vec4 {
         }
     }
 
+    pub fn get_ptr(&self) -> *const f32 {
+        &(self[0]) as *const f32
+    }
+
     /// return an unit vector on z axis
     pub fn z_axis() -> Vec4 {
         Vec4 {
