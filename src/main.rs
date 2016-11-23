@@ -5,6 +5,7 @@ mod renderer;
 use renderer::context::*;
 use renderer::mesh;
 use renderer::shader;
+use renderer::texture;
 
 
 extern crate rand;
@@ -25,6 +26,12 @@ static VERTEX_DATA: [GLfloat; 9] = [
     -0.5, -0.5, 0.0
 ];
 
+static VERTEX_TEX_DATA: [GLfloat; 6] = [
+    0.5, 0.0,
+    1.0, 1.0,
+    0.0, 1.0
+];
+
 static INDEX_DATA: [u32; 3] = [
     0, 1, 2
 ];
@@ -33,24 +40,29 @@ static INDEX_DATA: [u32; 3] = [
 static VS_SRC: &'static str =
    "#version 400\n\
     in vec3 position;\n\
+    in vec2 texcoord;\n\
     in vec4 color;\n\
+    out vec2 vTexcoord;\n\
     out vec4 vColor;\n\
     void main() {\n\
+        vTexcoord = texcoord;\n\
         vColor = color;\n\
-       gl_Position = vec4(position, 1.0);\n\
+        gl_Position = vec4(position, 1.0);\n\
     }";
 
 static FS_SRC: &'static str =
    "#version 400\n\
+    in vec2 vTexcoord;\n\
     in vec4 vColor;\n\
+    uniform sampler2D diffuseTexture;\n\
     out vec4 out_color;\n\
     void main() {\n\
-       out_color = vColor;\n\
+        vec4 diffuse = texture2D(diffuseTexture, vTexcoord);\n\
+        out_color = diffuse * vColor;\n\
     }";
 
 
 fn main() {
-
     let mut VERTEX_COL_DATA: [GLfloat; 12] = [
         1.0, 1.0, 1.0, 1.0,
         1.0, 0.0, 1.0, 1.0,
@@ -59,17 +71,25 @@ fn main() {
 
     let mut ctx = Context::new("data/config.json");
 
+    let t = texture::Texture::from_image("data/rust.png");
+
     let vs = shader::compile_shader(VS_SRC, gl::VERTEX_SHADER);
     let fs = shader::compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
     let program = shader::link_program(vs, fs);
 
-    let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_COL_DATA));
+    let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_TEX_DATA), Some(&VERTEX_COL_DATA));
 
     unsafe {
         gl::UseProgram(program);
         gl::BindFragDataLocation(program, 0,
             CString::new("out_color").unwrap().as_ptr());
+
+        gl::ActiveTexture(gl::TEXTURE0);
+        let diffuseTexLoc = gl::GetUniformLocation(program, CString::new("diffuseTexture").unwrap().as_ptr());
+        gl::Uniform1i(diffuseTexLoc, 0);
     }
+
+    t.bind();
 
     let mut rng = rand::thread_rng();
 
