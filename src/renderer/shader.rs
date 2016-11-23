@@ -62,6 +62,12 @@ impl Program {
         }
     }
 
+    pub fn bind(&self) {
+        unsafe{
+            gl::UseProgram(self.program_id);
+        }
+    }
+
     fn get_uniform(&mut self,name : &str) -> GLint {
         match self.uniform_loc.get(name) {
             Some(loc) => return *loc,
@@ -74,10 +80,17 @@ impl Program {
         }
     }
 
-    pub fn set_uniform(&mut self, name : &str, mat4 : Mat4){
+    pub fn set_uniform_matrix4fv(&mut self, name : &str, mat4 : Mat4){
         let loc =  self.get_uniform(name);
         unsafe{
             gl::UniformMatrix4fv(loc,1,gl::FALSE, mat4.get_ptr());
+        }
+    }
+
+    pub fn set_uniform_1i(&mut self, name : &str, int : GLint){
+        let loc =  self.get_uniform(name);
+        unsafe{
+            gl::Uniform1i(loc, int);
         }
     }
 

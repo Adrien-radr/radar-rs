@@ -88,13 +88,15 @@ fn main() {
     let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_TEX_DATA), Some(&VERTEX_COL_DATA));
 
     unsafe {
-        gl::UseProgram(program.program_id);
+        program.bind();
+        // gl::UseProgram(program.program_id);
         gl::BindFragDataLocation(program.program_id, 0,
             CString::new("out_color").unwrap().as_ptr());
 
         gl::ActiveTexture(gl::TEXTURE0);
-        let diffuseTexLoc = gl::GetUniformLocation(program.program_id, CString::new("diffuseTexture").unwrap().as_ptr());
-        gl::Uniform1i(diffuseTexLoc, 0);
+        program.set_uniform_1i("diffuseTexture",0);
+        // let diffuseTexLoc = gl::GetUniformLocation(program.program_id, CString::new("diffuseTexture").unwrap().as_ptr());
+        // gl::Uniform1i(diffuseTexLoc, 0);
     }
 
     t.bind();
