@@ -1,12 +1,27 @@
 extern crate glfw;
 extern crate gl;
 
+use std::cell::RefCell;
 use std::sync::mpsc;
 use self::glfw::Context as glfwContext;
-
+use renderer::shader::{Program, Shader, ShaderType};
 use system::config;
 use math::vec4::Vec4;
 use math::mat4::*;
+
+struct ResourceManager {
+    shader_programs: Vec<RefCell<Program>>
+}
+
+impl ResourceManager {
+    pub fn new() -> ResourceManager {
+        let programs = Vec::with_capacity(32);
+
+        ResourceManager {
+            shader_programs: programs
+        }
+    }
+}
 
 pub struct Context {
     pub glfw: glfw::Glfw,
@@ -26,6 +41,8 @@ pub struct Context {
 
     clear_color: Vec4,
     pub proj_matrix_2d: Mat4,
+
+    resources: ResourceManager
 }
 
 impl Context {
@@ -85,7 +102,9 @@ impl Context {
             prev_mouse_state: vec![false; 16],
 
             clear_color: default_clear_color,
-            proj_matrix_2d: proj_matrix
+            proj_matrix_2d: proj_matrix,
+
+            resources: ResourceManager::new()
         }
     }
 
@@ -195,5 +214,43 @@ impl Context {
 
     pub fn end_frame(&mut self) {
         self.window.swap_buffers();
+    }
+
+    pub fn build_shader_program(&mut self, name: &str, shaders: &[Option<&str>; 5], uniforms: &[&str]) -> RefCell<Program> {
+        let idx = self.resources.shader_programs.len();
+
+        let mut prog = Program::new();
+        
+        // build vertex shader
+        let vs = match shaders[0] {
+            Some(sh_str) => Shader::new(ShaderType::from_index(0), sh_str.to_string()),
+            None => panic!("Shader Programs NEED a Vertex shader.")
+        };
+
+        // build fragment shader
+        let fs = match shaders[1] {
+            Some(sh_str) => Shader::new(ShaderType::from_index(1), sh_str.to_string()),
+            None => panic!("Shader Programs NEED a Fragment shader.") 
+        };
+
+        // adrien todo - add other shader types
+
+        prog.attach(vs);
+        prog.attach(fs);
+        prog.link();
+
+        prog.bind();
+        for u in uniforms.iter() {
+            prog.register_uniform(u);
+        }
+
+        self.resources.shader_programs.push(RefCell::new(prog));
+        self.resources.shader_programs[idx].clone()
+    }
+
+    pub fn reload_shaders(&mut self) {
+        for p in self.resources.shader_programs.iter() {
+
+        }
     }
 }

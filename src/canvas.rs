@@ -6,6 +6,7 @@ use math::vec4::*;
 use math::mat4::*;
 use math::transform;
 
+use std::cell::RefCell;
 
 static WIDGET_VERT_POS : [f32; 12] = [
     0.0, 0.0, 1.0,
@@ -29,7 +30,7 @@ pub struct Widget<'a> {
     position: (u32, u32),
     size: (u32, u32),
     mesh: Mesh,
-    shader: &'a Program,
+    shader: &'a RefCell<Program>,
 
     backColor: Vec4,
 
@@ -38,7 +39,7 @@ pub struct Widget<'a> {
 }
 
 impl<'a> Widget<'a> {
-    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a Program) -> Widget {
+    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a RefCell<Program>) -> Widget {
         let m = Mesh::new(&WIDGET_VERT_POS, &WIDGET_INDEX, Some(&WIDGET_VERT_TEX), None);
 
         Widget {
@@ -57,8 +58,8 @@ impl<'a> Widget<'a> {
             self.pos_changed = false;
             self.model_matrix = transform::scale(Vec3::new(self.size.0 as f32, self.size.1 as f32, 1.0));
             self.model_matrix *= transform::translation(Vec3::new(self.position.0 as f32, self.position.1 as f32, 0.0));
-            self.shader.bind();
-            self.shader.set_uniform_matrix4fv("ModelMatrix", &self.model_matrix);
+            self.shader.borrow().bind();
+            self.shader.borrow_mut().set_uniform_matrix4fv("ModelMatrix", &self.model_matrix);
         }
     }
 
@@ -67,10 +68,13 @@ impl<'a> Widget<'a> {
     }
 
     pub fn render(&self) {
-        self.shader.bind();
-        self.shader.set_uniform_4fv("backColor", &self.backColor);
-        self.shader.set_uniform_2fv("canvasPosition", (self.position.0 as f32, self.position.1 as f32));
-        self.shader.set_uniform_2fv("canvasSize", (self.size.0 as f32, self.size.1 as f32));
+        {
+            let p = self.shader.borrow_mut();
+            p.bind();
+            p.set_uniform_4fv("backColor", &self.backColor);
+            p.set_uniform_2fv("canvasPosition", (self.position.0 as f32, self.position.1 as f32));
+            p.set_uniform_2fv("canvasSize", (self.size.0 as f32, self.size.1 as f32));
+        }
         self.mesh.render();
     }
 }
@@ -81,7 +85,7 @@ pub struct Canvas<'a> {
 }
 
 impl<'a> Canvas<'a> {
-    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a Program) -> Canvas {
+    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a RefCell<Program>) -> Canvas {
         let w = Widget::new(pos, size, shader_program);
         let t = Texture::from_empty(size, TextureFmt::RGB8U);
 

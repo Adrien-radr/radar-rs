@@ -13,21 +13,32 @@ use std::collections::HashMap;
 use std::mem;
 
 pub enum ShaderType{
-    VERTEX,
-    TESSCRTL,
-    TESSEVAL,
-    GEOMETRY,
-    FRAGMENT,
+    Vertex,
+    Fragment,
+    Geometry,
+    TessCtrl,
+    TessEval,
 }
 
 impl ShaderType {
     pub fn to_gl_type(&self) -> GLenum {
         match self {
-            &ShaderType::VERTEX => gl::VERTEX_SHADER,
-            &ShaderType::FRAGMENT => gl::FRAGMENT_SHADER,
-            &ShaderType::GEOMETRY => gl::GEOMETRY_SHADER,
-            &ShaderType::TESSEVAL => gl::TESS_EVALUATION_SHADER,
-            &ShaderType::TESSCRTL => gl::TESS_CONTROL_SHADER,
+            &ShaderType::Vertex => gl::VERTEX_SHADER,
+            &ShaderType::Fragment => gl::FRAGMENT_SHADER,
+            &ShaderType::Geometry => gl::GEOMETRY_SHADER,
+            &ShaderType::TessEval => gl::TESS_EVALUATION_SHADER,
+            &ShaderType::TessCtrl => gl::TESS_CONTROL_SHADER,
+        }
+    }
+
+    pub fn from_index(idx: usize) -> ShaderType {
+        match idx {
+            0 => ShaderType::Vertex,
+            1 => ShaderType::Fragment,
+            2 => ShaderType::Geometry,
+            3 => ShaderType::TessCtrl,
+            4 => ShaderType::TessEval,
+            _ => panic!("Unexisting ShaderType index {}.", idx)
         }
     }
 }
@@ -36,8 +47,7 @@ impl ShaderType {
 pub struct Shader{
     pub shader_id: GLuint, 
     shader_type: ShaderType,
-    source_file: String,
-    source: String,
+    source_file: String
 }
 
 impl Drop for Shader {
@@ -52,16 +62,19 @@ impl Shader{
         Shader {
             shader_id : compile_shader(&src, shader_type.to_gl_type()), 
             shader_type : shader_type,
-            source_file : sourceFilePath,
-            source : src 
+            source_file : sourceFilePath
         }
     }
-}
 
+    pub fn destroy(&self) {
+        unsafe { gl::DeleteShader(self.shader_id); }
+    }
+}
 
 pub struct Program{
     pub program_id : GLuint,
     uniform_loc : HashMap<String, GLint>,
+    attached_shaders: Vec<Shader>
 }
 
 impl Drop for Program {
@@ -76,9 +89,14 @@ impl Program {
         unsafe{
             Program {
                 program_id : gl::CreateProgram(),
-                uniform_loc : HashMap::new(),              
+                uniform_loc : HashMap::new(),   
+                attached_shaders: Vec::with_capacity(5)           
             }
         }
+    }
+
+    pub fn destroy(&self) {
+        unsafe { gl::DeleteProgram(self.program_id); }
     }
 
     pub fn bind(&self) {
@@ -136,10 +154,11 @@ impl Program {
         }
     }
 
-    pub fn attach(&self, shader : &Shader){
+    pub fn attach(&mut self, shader : Shader){
         unsafe {
             gl::AttachShader(self.program_id,shader.shader_id);
         }
+        self.attached_shaders.push(shader);
     }
 
     pub fn unbind(&self) {

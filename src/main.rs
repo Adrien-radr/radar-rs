@@ -15,13 +15,14 @@ use canvas::Canvas;
 extern crate rand;
 extern crate time;
 extern crate gl;
+extern crate glfw;
 
 use gl::types::*;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
 use rand::Rng;
-
+// use glfw::
 
 // Vertex data
 static VERTEX_DATA: [GLfloat; 9] = [
@@ -51,40 +52,34 @@ fn main() {
 
     let t = texture::Texture::from_image("data/rust.png");
 
-
-    let mut program = Program::new();
-    let vs = Shader::new(ShaderType::VERTEX,"data/shaders/test.vs".to_string());
-    let fs = Shader::new(ShaderType::FRAGMENT,"data/shaders/test.frag".to_string());
-    program.attach(&vs);
-    program.attach(&fs);
-    program.link();
-    program.register_uniform("ProjMatrix");
-    program.register_uniform("ModelMatrix");
-    program.register_uniform("diffuseTexture");
-
     let mut m0 = mesh::Mesh::new(&VERTEX_DATA, &INDEX_DATA, Some(&VERTEX_TEX_DATA), Some(&VERTEX_COL_DATA));
 
-    program.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
-    program.set_uniform_matrix4fv("ModelMatrix", &Mat4::identity());
-    program.set_uniform_1i("diffuseTexture", 0);
+    let program_shaders = [Some("data/shaders/test.vs"), Some("data/shaders/test.frag"), None, None, None];
+    let program_uniforms = ["ProjMatrix", "ModelMatrix", "diffuseTexture"];
 
-    let mut canvas_program = Program::new();
-    let canvas_vs = Shader::new(ShaderType::VERTEX, "data/shaders/canvas.vs".to_string());
-    let canvas_fs = Shader::new(ShaderType::FRAGMENT, "data/shaders/canvas.frag".to_string());
-    canvas_program.attach(&canvas_vs);
-    canvas_program.attach(&canvas_fs);
-    canvas_program.link();
-    canvas_program.register_uniform("ProjMatrix");
-    canvas_program.register_uniform("ModelMatrix");
-    canvas_program.register_uniform("backColor");
-    canvas_program.register_uniform("diffuseTexture");
-    canvas_program.register_uniform("canvasPosition");
-    canvas_program.register_uniform("canvasSize");
+    let canvas_program_shaders = [Some("data/shaders/canvas.vs"), Some("data/shaders/canvas.frag"), None, None, None];
+    let canvas_program_uniforms = ["ProjMatrix", "ModelMatrix", "diffuseTexture", "backColor", "canvasPosition", "canvasSize"];
 
-    canvas_program.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
-    canvas_program.set_uniform_1i("diffuseTexture", 0);
+    let prog1 = ctx.build_shader_program("testProgram", &program_shaders, &program_uniforms);
+    let prog2 = ctx.build_shader_program("canvasProgram", &canvas_program_shaders, &canvas_program_uniforms);
 
-    let mut canvas1 = Canvas::new((400, 200), (200, 100), &canvas_program);
+    {
+        let p = prog1.borrow_mut();
+        p.bind();
+        p.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
+        p.set_uniform_matrix4fv("ModelMatrix", &Mat4::identity());
+        p.set_uniform_1i("diffuseTexture", 0);
+    }
+
+    {
+        let p = prog2.borrow_mut();
+        p.bind();
+        p.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
+        p.set_uniform_1i("diffuseTexture", 0);
+    }
+
+    let mut canvas1 = Canvas::new((000, 000), (1200, 600), prog2);
+    // reload_shaders(&ctx);
 
     let mut rng = rand::thread_rng();
 
@@ -115,13 +110,19 @@ fn main() {
             m0.update_buffer(mesh::MeshAttrib::Color, &VERTEX_COL_DATA);
         }
 
-        program.bind();
+        // if ctx.is_key_hit(glfw::Key::R) && ctx.is_key_down(glfw::Key::LeftControl) {
+            // reload_shaders(&ctx);
+        // }
+
+        prog1.borrow().bind();
         t.bind();
         m0.render();
 
-        canvas_program.bind();
+        prog2.borrow().bind();
         canvas1.update(elapsed);
         canvas1.render();
+
+        // println!("{}, {}", elapsed, 1.0/elapsed);
 
 
         ctx.end_frame();
