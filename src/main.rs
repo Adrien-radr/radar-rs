@@ -16,6 +16,9 @@ extern crate rand;
 extern crate time;
 extern crate gl;
 
+extern crate specs;
+use specs::Join;
+
 use gl::types::*;
 use std::mem;
 use std::ptr;
@@ -39,6 +42,21 @@ static VERTEX_TEX_DATA: [GLfloat; 6] = [
 static INDEX_DATA: [u32; 3] = [
     0, 1, 2
 ];
+
+#[derive(Clone, Debug)]
+struct CompPos(f32,f32);
+impl specs::Component for CompPos{
+    type Storage = specs::VecStorage<CompPos>;
+}
+#[derive(Clone, Debug)]
+struct CompVel(f32,f32);
+impl specs::Component for CompVel{
+    type Storage = specs::VecStorage<CompVel>;
+}
+struct CompMesh(mesh::Mesh);
+impl specs::Component for CompMesh{
+    type Storage = specs::VecStorage<CompMesh>;     
+}
 
 fn main() {
     let mut VERTEX_COL_DATA: [GLfloat; 12] = [
@@ -115,6 +133,7 @@ fn main() {
             m0.update_buffer(mesh::MeshAttrib::Color, &VERTEX_COL_DATA);
         }
 
+        //now we update the systems
         program.bind();
         t.bind();
         m0.render();

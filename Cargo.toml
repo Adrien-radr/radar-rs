@@ -9,6 +9,7 @@ image = "*"
 rustc-serialize = "*"
 time = "*"
 rand = "*"
+specs ="*"
 
 [dependencies.glfw]
 git = "https://github.com/PistonDevelopers/glfw-rs.git"
