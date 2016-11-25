@@ -1,7 +1,6 @@
 extern crate glfw;
 extern crate gl;
 
-use std::cell::RefCell;
 use std::sync::mpsc;
 use self::glfw::Context as glfwContext;
 use renderer::shader::{Program, Shader, ShaderType};
@@ -10,7 +9,7 @@ use math::vec4::Vec4;
 use math::mat4::*;
 
 struct ResourceManager {
-    shader_programs: Vec<RefCell<Program>>
+    shader_programs: Vec<Program>
 }
 
 impl ResourceManager {
@@ -45,8 +44,9 @@ pub struct Context {
     resources: ResourceManager
 }
 
-impl Context {
+// static g_ctx: Box<Context>;
 
+impl Context {
     fn load_gl_procs(window : &mut glfw::Window) {
         gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
     }
@@ -216,7 +216,7 @@ impl Context {
         self.window.swap_buffers();
     }
 
-    pub fn build_shader_program(&mut self, name: &str, shaders: &[Option<&str>; 5], uniforms: &[&str]) -> RefCell<Program> {
+    pub fn build_shader_program(&mut self, name: &str, shaders: &[Option<&str>; 5], uniforms: &[&str]) -> usize {
         let idx = self.resources.shader_programs.len();
 
         let mut prog = Program::new();
@@ -244,8 +244,12 @@ impl Context {
             prog.register_uniform(u);
         }
 
-        self.resources.shader_programs.push(RefCell::new(prog));
-        self.resources.shader_programs[idx].clone()
+        self.resources.shader_programs.push(prog);
+        idx
+    }
+
+    pub fn borrow_shader(&self, handle: usize) -> &Program {
+        &self.resources.shader_programs[handle]
     }
 
     pub fn reload_shaders(&mut self) {

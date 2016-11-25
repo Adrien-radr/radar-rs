@@ -60,11 +60,11 @@ fn main() {
     let canvas_program_shaders = [Some("data/shaders/canvas.vs"), Some("data/shaders/canvas.frag"), None, None, None];
     let canvas_program_uniforms = ["ProjMatrix", "ModelMatrix", "diffuseTexture", "backColor", "canvasPosition", "canvasSize"];
 
-    let prog1 = ctx.build_shader_program("testProgram", &program_shaders, &program_uniforms);
-    let prog2 = ctx.build_shader_program("canvasProgram", &canvas_program_shaders, &canvas_program_uniforms);
+    let prog1_h = ctx.build_shader_program("testProgram", &program_shaders, &program_uniforms);
+    let prog2_h = ctx.build_shader_program("canvasProgram", &canvas_program_shaders, &canvas_program_uniforms);
 
     {
-        let p = prog1.borrow_mut();
+        let p = ctx.borrow_shader(prog1_h);
         p.bind();
         p.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
         p.set_uniform_matrix4fv("ModelMatrix", &Mat4::identity());
@@ -72,13 +72,13 @@ fn main() {
     }
 
     {
-        let p = prog2.borrow_mut();
+        let p = ctx.borrow_shader(prog2_h);
         p.bind();
         p.set_uniform_matrix4fv("ProjMatrix", &ctx.proj_matrix_2d);
         p.set_uniform_1i("diffuseTexture", 0);
     }
 
-    let mut canvas1 = Canvas::new((000, 000), (1200, 600), prog2);
+    let mut canvas1 = Canvas::new(&mut ctx, (000, 000), (1200, 600), prog2_h);
     // reload_shaders(&ctx);
 
     let mut rng = rand::thread_rng();
@@ -114,11 +114,11 @@ fn main() {
             // reload_shaders(&ctx);
         // }
 
-        prog1.borrow().bind();
+        ctx.borrow_shader(prog1_h).bind();
         t.bind();
         m0.render();
 
-        prog2.borrow().bind();
+        ctx.borrow_shader(prog2_h).bind();
         canvas1.update(elapsed);
         canvas1.render();
 

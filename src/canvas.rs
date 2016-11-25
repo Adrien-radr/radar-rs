@@ -6,7 +6,7 @@ use math::vec4::*;
 use math::mat4::*;
 use math::transform;
 
-use std::cell::RefCell;
+use renderer::context::Context;
 
 static WIDGET_VERT_POS : [f32; 12] = [
     0.0, 0.0, 1.0,
@@ -30,26 +30,29 @@ pub struct Widget<'a> {
     position: (u32, u32),
     size: (u32, u32),
     mesh: Mesh,
-    shader: &'a RefCell<Program>,
+    shader_handle: usize,
 
     backColor: Vec4,
 
     model_matrix: Mat4,
-    pos_changed: bool
+    pos_changed: bool,
+
+    ctx: &'a Context
 }
 
 impl<'a> Widget<'a> {
-    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a RefCell<Program>) -> Widget {
+    pub fn new(ctx: &'a mut Context, pos: (u32, u32), size: (u32, u32), shader_h: usize) -> Widget {
         let m = Mesh::new(&WIDGET_VERT_POS, &WIDGET_INDEX, Some(&WIDGET_VERT_TEX), None);
 
         Widget {
             position: pos,
             size: size,
             mesh: m,
-            shader: shader_program,
+            shader_handle: shader_h,
             backColor: Vec4::new(0.9,0.9,0.9,1.0),
             model_matrix: Mat4::identity(),
-            pos_changed: true
+            pos_changed: true,
+            ctx: ctx
         }
     }
 
@@ -58,8 +61,11 @@ impl<'a> Widget<'a> {
             self.pos_changed = false;
             self.model_matrix = transform::scale(Vec3::new(self.size.0 as f32, self.size.1 as f32, 1.0));
             self.model_matrix *= transform::translation(Vec3::new(self.position.0 as f32, self.position.1 as f32, 0.0));
-            self.shader.borrow().bind();
-            self.shader.borrow_mut().set_uniform_matrix4fv("ModelMatrix", &self.model_matrix);
+            {
+                let p = self.ctx.borrow_shader(self.shader_handle);
+                p.bind();
+                p.set_uniform_matrix4fv("ModelMatrix", &self.model_matrix);
+            }
         }
     }
 
@@ -69,7 +75,7 @@ impl<'a> Widget<'a> {
 
     pub fn render(&self) {
         {
-            let p = self.shader.borrow_mut();
+            let p = self.ctx.borrow_shader(self.shader_handle);
             p.bind();
             p.set_uniform_4fv("backColor", &self.backColor);
             p.set_uniform_2fv("canvasPosition", (self.position.0 as f32, self.position.1 as f32));
@@ -85,8 +91,8 @@ pub struct Canvas<'a> {
 }
 
 impl<'a> Canvas<'a> {
-    pub fn new(pos: (u32, u32), size: (u32, u32), shader_program: &'a RefCell<Program>) -> Canvas {
-        let w = Widget::new(pos, size, shader_program);
+    pub fn new(ctx: &'a mut Context, pos: (u32, u32), size: (u32, u32), shader_program_handle: usize) -> Canvas {
+        let w = Widget::new(ctx, pos, size, shader_program_handle);
         let t = Texture::from_empty(size, TextureFmt::RGB8U);
 
         Canvas {
